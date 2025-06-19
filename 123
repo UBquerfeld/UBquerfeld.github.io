@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GIF 크롭 도구 (사이즈 조절 가능)</title>
+  <style>
+    canvas {
+      border: 1px solid #ccc;
+    }
+    .container {
+      display: flex;
+      gap: 16px;
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>GIF 크롭 도구</h1>
+  <input type="file" id="gifFileInput" accept="image/gif">
+  <div class="container">
+    <div>
+      <h3>원본 GIF</h3>
+      <canvas id="gifCanvas"></canvas>
+    </div>
+    <div class="controls">
+      <label>크롭 폭(px): <input type="number" id="cropWidthInput" value="50" min="1" max="500"></label>
+      <label>크롭 높이(px): <input type="number" id="cropHeightInput" value="50" min="1" max="500"></label>
+      <button id="cropBtn">크롭</button>
+      <canvas id="croppedCanvas" width="50" height="50"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const gifInput = document.getElementById('gifFileInput');
+    const gifCanvas = document.getElementById('gifCanvas');
+    const gifCtx = gifCanvas.getContext('2d');
+    const croppedCanvas = document.getElementById('croppedCanvas');
+    const croppedCtx = croppedCanvas.getContext('2d');
+
+    const cropWidthInput = document.getElementById('cropWidthInput');
+    const cropHeightInput = document.getElementById('cropHeightInput');
+    const cropBtn = document.getElementById('cropBtn');
+
+    let image = null;
+
+    gifInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file || !file.type.includes('gif')) return alert('GIF 파일을 선택해주세요.');
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        image = new Image();
+        image.onload = function() {
+          gifCanvas.width = image.width;
+          gifCanvas.height = image.height;
+          gifCtx.drawImage(image, 0, 0);
+        };
+        image.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    cropBtn.addEventListener('click', () => {
+      const cropW = parseInt(cropWidthInput.value);
+      const cropH = parseInt(cropHeightInput.value);
+      croppedCanvas.width = cropW;
+      croppedCanvas.height = cropH;
+
+      croppedCtx.clearRect(0, 0, cropW, cropH);
+      croppedCtx.drawImage(gifCanvas, 0, 0, cropW, cropH, 0, 0, cropW, cropH);
+    });
+  </script>
+</body>
+</html>
