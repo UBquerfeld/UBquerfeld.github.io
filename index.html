@@ -3,346 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GIF 편집 도구 - 전문 GIF 크롭 및 변환</title>
+    <title>GIF 편집 도구</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <header class="header">
+        <header class="py-16">
             <h1>GIF 편집 도구</h1>
-            <p class="header__description">전문적인 GIF 크롭 및 동영상 변환 도구입니다.</p>
+            <p class="color-text-secondary">움짤 크롭과 동영상을 GIF로 변환하는 도구</p>
         </header>
 
-        <!-- 탭 네비게이션 -->
-        <nav class="tab-nav">
-            <button class="tab-btn tab-btn--active" data-tab="gif-crop">GIF 크롭</button>
-            <button class="tab-btn" data-tab="video-to-gif">동영상→GIF</button>
-        </nav>
+        <div class="tabs">
+            <button class="tab-button active" data-tab="gif-crop">GIF 크롭</button>
+            <button class="tab-button" data-tab="video-to-gif">동영상 → GIF</button>
+        </div>
 
-        <main class="main">
-            <!-- GIF 크롭 탭 -->
-            <div class="tab-content tab-content--active" id="gif-crop">
-                <!-- 파일 업로드 섹션 -->
-                <section class="upload-section" id="gifUploadSection">
-                    <div class="upload-area" id="gifUploadArea">
-                        <div class="upload-area__content">
-                            <div class="upload-area__icon">🖼️</div>
-                            <h3>GIF 파일을 여기에 드래그하거나 클릭하여 업로드</h3>
-                            <p>최대 파일 크기: 10MB | 지원 형식: GIF, PNG, JPG</p>
-                            <input type="file" id="gifFileInput" accept=".gif,.png,.jpg,.jpeg" class="upload-area__input">
-                            <button type="button" class="btn btn--primary">
-                                파일 선택
-                            </button>
-                        </div>
-                    </div>
+        <!-- GIF Crop Tab -->
+        <div id="gif-crop" class="tab-content active">
+            <div class="card">
+                <div class="card__body">
+                    <h2>GIF 크롭 도구</h2>
+                    <p class="color-text-secondary mb-16">움짤을 50x50 크기로 크롭합니다 (애니메이션 유지됨)</p>
                     
-                    <!-- URL 입력 영역 -->
+                    <!-- File Upload Area -->
+                    <div class="upload-area" id="gif-upload-area">
+                        <div class="upload-content">
+                            <div class="upload-icon">📁</div>
+                            <p>GIF 파일을 여기에 드롭하거나 클릭하여 선택</p>
+                            <input type="file" id="gif-file-input" accept=".gif" hidden>
+                            <button class="btn btn--secondary" onclick="document.getElementById('gif-file-input').click()">파일 선택</button>
+                        </div>
+                    </div>
+
+                    <!-- URL Input -->
                     <div class="url-section">
-                        <div class="divider">
-                            <span>또는</span>
-                        </div>
                         <div class="form-group">
-                            <label class="form-label">GIF URL 입력</label>
-                            <div class="url-input-group">
-                                <input type="url" id="gifUrlInput" class="form-control" placeholder="https://example.com/image.gif">
-                                <button type="button" class="btn btn--secondary" id="gifUrlLoadBtn">로드</button>
+                            <label class="form-label">또는 외부 URL에서 불러오기:</label>
+                            <div class="flex gap-8">
+                                <input type="url" id="gif-url-input" class="form-control" placeholder="https://example.com/image.gif">
+                                <button class="btn btn--primary" id="load-gif-url">URL에서 불러오기</button>
                             </div>
                         </div>
                     </div>
-                </section>
 
-                <!-- 편집 섹션 -->
-                <section class="edit-section hidden" id="gifEditSection">
-                    <div class="edit-layout">
-                        <!-- 왼쪽 패널: 원본 GIF -->
-                        <div class="edit-panel edit-panel--left">
-                            <div class="card">
-                                <div class="card__header">
-                                    <h3>원본 GIF</h3>
-                                    <div class="gif-controls">
-                                        <button type="button" class="btn btn--sm btn--secondary" id="gifPlayPauseBtn">⏸️ 정지</button>
+                    <!-- Preview Section -->
+                    <div id="gif-preview-section" class="preview-section hidden">
+                        <div class="preview-container">
+                            <div class="original-preview">
+                                <h3>원본</h3>
+                                <div class="canvas-container">
+                                    <canvas id="original-canvas"></canvas>
+                                    <div id="crop-selector" class="crop-selector"></div>
+                                </div>
+                                <div class="controls">
+                                    <button class="btn btn--secondary" id="play-pause-btn">⏸️ 일시정지</button>
+                                    <div class="frame-control">
+                                        <label>프레임: <span id="current-frame">1</span>/<span id="total-frames">1</span></label>
+                                        <input type="range" id="frame-slider" min="0" max="0" value="0">
                                     </div>
                                 </div>
-                                <div class="card__body">
-                                    <div class="gif-preview">
-                                        <div class="crop-container" id="gifCropContainer">
-                                            <canvas id="gifOriginalCanvas" class="original-canvas"></canvas>
-                                            <div class="crop-overlay" id="gifCropOverlay">
-                                                <div class="crop-box" id="gifCropBox">
-                                                    <div class="crop-handle crop-handle--nw"></div>
-                                                    <div class="crop-handle crop-handle--ne"></div>
-                                                    <div class="crop-handle crop-handle--sw"></div>
-                                                    <div class="crop-handle crop-handle--se"></div>
-                                                    <div class="crop-move-handle" id="gifCropMoveHandle"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="gif-info" id="gifInfo">
-                                        <div class="info-grid">
-                                            <div class="info-item">
-                                                <span class="info-label">크기:</span>
-                                                <span class="info-value" id="gifSize">-</span>
-                                            </div>
-                                            <div class="info-item">
-                                                <span class="info-label">프레임:</span>
-                                                <span class="info-value" id="gifFrames">-</span>
-                                            </div>
-                                            <div class="info-item">
-                                                <span class="info-label">지속시간:</span>
-                                                <span class="info-value" id="gifDuration">-</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="frame-slider">
-                                        <label class="form-label">프레임 탐색</label>
-                                        <input type="range" id="gifFrameSlider" class="form-control" min="0" max="0" value="0">
-                                        <div class="frame-info">
-                                            <span id="gifCurrentFrame">1</span> / <span id="gifTotalFrames">1</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 오른쪽 패널: 설정 및 미리보기 -->
-                        <div class="edit-panel edit-panel--right">
-                            <div class="card">
-                                <div class="card__header">
-                                    <h3>크롭 설정</h3>
-                                </div>
-                                <div class="card__body">
-                                    <div class="settings-group">
-                                        <div class="form-group">
-                                            <label class="form-label">크롭 크기</label>
-                                            <div class="crop-size-display">50 x 50 픽셀 (고정)</div>
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label class="form-label">배경색</label>
-                                            <select id="gifBackgroundSelect" class="form-control">
-                                                <option value="transparent">투명</option>
-                                                <option value="white">흰색</option>
-                                                <option value="black">검정색</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <button type="button" class="btn btn--primary btn--full-width" id="gifCropBtn">
-                                        크롭 실행
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- 미리보기 카드 -->
-                            <div class="card">
-                                <div class="card__header">
-                                    <h3>실시간 미리보기</h3>
-                                </div>
-                                <div class="card__body">
-                                    <div class="preview-container">
-                                        <canvas id="gifPreviewCanvas" class="preview-canvas" width="50" height="50"></canvas>
-                                        <p class="preview-note">크롭 영역을 선택하면 여기에 미리보기가 표시됩니다.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 결과 섹션 -->
-                <section class="result-section hidden" id="gifResultSection">
-                    <div class="card">
-                        <div class="card__header">
-                            <h3>처리 결과</h3>
-                        </div>
-                        <div class="card__body">
-                            <div class="processing-status" id="gifProcessingStatus">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="gifProgressFill"></div>
-                                </div>
-                                <p class="progress-text" id="gifProgressText">처리 중...</p>
                             </div>
                             
-                            <div class="result-preview hidden" id="gifResultPreview">
-                                <div class="result-gif">
-                                    <h4>크롭된 GIF (50x50)</h4>
-                                    <div class="result-container">
-                                        <canvas id="gifResultCanvas" class="result-canvas" width="50" height="50"></canvas>
-                                    </div>
-                                    <div class="result-actions">
-                                        <button type="button" class="btn btn--primary" id="gifDownloadBtn">
-                                            다운로드
-                                        </button>
-                                        <button type="button" class="btn btn--secondary" id="gifNewFileBtn">
-                                            새 파일 업로드
-                                        </button>
-                                    </div>
+                            <div class="cropped-preview">
+                                <h3>크롭된 결과 (50x50)</h3>
+                                <canvas id="cropped-canvas" width="50" height="50"></canvas>
+                                <div class="crop-settings">
+                                    <label class="form-label">품질:</label>
+                                    <select id="quality-select" class="form-control">
+                                        <option value="high">높음</option>
+                                        <option value="medium" selected>보통</option>
+                                        <option value="low">낮음</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </section>
-            </div>
 
-            <!-- 동영상→GIF 탭 -->
-            <div class="tab-content" id="video-to-gif">
-                <!-- 동영상 업로드 섹션 -->
-                <section class="upload-section" id="videoUploadSection">
-                    <div class="upload-area" id="videoUploadArea">
-                        <div class="upload-area__content">
-                            <div class="upload-area__icon">🎬</div>
-                            <h3>동영상 파일을 여기에 드래그하거나 클릭하여 업로드</h3>
-                            <p>최대 파일 크기: 50MB | 지원 형식: MP4, MOV, AVI, WebM</p>
-                            <input type="file" id="videoFileInput" accept=".mp4,.mov,.avi,.webm,.mkv" class="upload-area__input">
-                            <button type="button" class="btn btn--primary">
-                                파일 선택
-                            </button>
+                        <div class="action-buttons">
+                            <button class="btn btn--primary" id="crop-gif-btn">GIF 크롭하기</button>
+                            <button class="btn btn--secondary" id="reset-gif-btn">초기화</button>
                         </div>
                     </div>
+
+                    <!-- Processing Indicator -->
+                    <div id="gif-processing" class="processing-indicator hidden">
+                        <div class="loading-spinner"></div>
+                        <p>처리 중...</p>
+                    </div>
+
+                    <!-- Error Messages -->
+                    <div id="gif-error" class="error-message hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video to GIF Tab -->
+        <div id="video-to-gif" class="tab-content">
+            <div class="card">
+                <div class="card__body">
+                    <h2>동영상을 GIF로 변환</h2>
+                    <p class="color-text-secondary mb-16">동영상 파일을 GIF로 변환합니다</p>
                     
-                    <!-- URL 입력 영역 -->
+                    <!-- Video Upload Area -->
+                    <div class="upload-area" id="video-upload-area">
+                        <div class="upload-content">
+                            <div class="upload-icon">🎬</div>
+                            <p>동영상 파일을 여기에 드롭하거나 클릭하여 선택</p>
+                            <p class="small-text">지원 형식: MP4, MOV, AVI, WebM</p>
+                            <input type="file" id="video-file-input" accept=".mp4,.mov,.avi,.webm" hidden>
+                            <button class="btn btn--secondary" onclick="document.getElementById('video-file-input').click()">파일 선택</button>
+                        </div>
+                    </div>
+
+                    <!-- Video URL Input -->
                     <div class="url-section">
-                        <div class="divider">
-                            <span>또는</span>
-                        </div>
                         <div class="form-group">
-                            <label class="form-label">동영상 URL 입력</label>
-                            <div class="url-input-group">
-                                <input type="url" id="videoUrlInput" class="form-control" placeholder="https://example.com/video.mp4">
-                                <button type="button" class="btn btn--secondary" id="videoUrlLoadBtn">로드</button>
+                            <label class="form-label">또는 동영상 URL에서 불러오기:</label>
+                            <div class="flex gap-8">
+                                <input type="url" id="video-url-input" class="form-control" placeholder="https://example.com/video.mp4">
+                                <button class="btn btn--primary" id="load-video-url">URL에서 불러오기</button>
                             </div>
                         </div>
                     </div>
-                </section>
 
-                <!-- 동영상 편집 섹션 -->
-                <section class="edit-section hidden" id="videoEditSection">
-                    <div class="edit-layout">
-                        <!-- 왼쪽 패널: 동영상 미리보기 -->
-                        <div class="edit-panel edit-panel--left">
-                            <div class="card">
-                                <div class="card__header">
-                                    <h3>동영상 미리보기</h3>
-                                </div>
-                                <div class="card__body">
-                                    <div class="video-preview">
-                                        <video id="videoPreview" class="video-player" controls></video>
-                                    </div>
-                                    <div class="video-info" id="videoInfo">
-                                        <div class="info-grid">
-                                            <div class="info-item">
-                                                <span class="info-label">크기:</span>
-                                                <span class="info-value" id="videoSize">-</span>
-                                            </div>
-                                            <div class="info-item">
-                                                <span class="info-label">지속시간:</span>
-                                                <span class="info-value" id="videoDuration">-</span>
-                                            </div>
-                                            <div class="info-item">
-                                                <span class="info-label">FPS:</span>
-                                                <span class="info-value" id="videoFps">-</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                    <!-- Video Preview Section -->
+                    <div id="video-preview-section" class="preview-section hidden">
+                        <div class="video-container">
+                            <video id="video-preview" controls></video>
+                        </div>
+
+                        <div class="conversion-settings">
+                            <div class="form-group">
+                                <label class="form-label">시작 시간 (초):</label>
+                                <input type="number" id="start-time" class="form-control" value="0" min="0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">종료 시간 (초):</label>
+                                <input type="number" id="end-time" class="form-control" value="3" min="0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">FPS:</label>
+                                <input type="number" id="fps-setting" class="form-control" value="10" min="5" max="30">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">크기:</label>
+                                <select id="size-setting" class="form-control">
+                                    <option value="original">원본 크기</option>
+                                    <option value="320">320px 너비</option>
+                                    <option value="480" selected>480px 너비</option>
+                                    <option value="640">640px 너비</option>
+                                </select>
                             </div>
                         </div>
 
-                        <!-- 오른쪽 패널: 변환 설정 -->
-                        <div class="edit-panel edit-panel--right">
-                            <div class="card">
-                                <div class="card__header">
-                                    <h3>GIF 변환 설정</h3>
-                                </div>
-                                <div class="card__body">
-                                    <div class="settings-group">
-                                        <div class="form-group">
-                                            <label class="form-label">시작 시간 (초)</label>
-                                            <input type="number" id="videoStartTime" class="form-control" min="0" step="0.1" value="0">
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label class="form-label">끝 시간 (초)</label>
-                                            <input type="number" id="videoEndTime" class="form-control" min="0" step="0.1" value="5">
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label class="form-label">프레임 속도 (FPS)</label>
-                                            <select id="videoFpsSelect" class="form-control">
-                                                <option value="5">5 FPS</option>
-                                                <option value="10" selected>10 FPS</option>
-                                                <option value="15">15 FPS</option>
-                                                <option value="20">20 FPS</option>
-                                                <option value="30">30 FPS</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label class="form-label">GIF 크기</label>
-                                            <select id="videoGifSize" class="form-control">
-                                                <option value="320">320px (작음)</option>
-                                                <option value="480" selected>480px (중간)</option>
-                                                <option value="640">640px (큼)</option>
-                                                <option value="original">원본 크기</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label class="form-label">품질</label>
-                                            <select id="videoQualitySelect" class="form-control">
-                                                <option value="1">최고품질 (용량 큼)</option>
-                                                <option value="10" selected>고품질</option>
-                                                <option value="20">일반품질</option>
-                                                <option value="30">압축품질 (용량 작음)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <button type="button" class="btn btn--primary btn--full-width" id="videoConvertBtn">
-                                        GIF로 변환
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="action-buttons">
+                            <button class="btn btn--primary" id="convert-video-btn">GIF로 변환</button>
+                            <button class="btn btn--secondary" id="reset-video-btn">초기화</button>
                         </div>
                     </div>
-                </section>
 
-                <!-- 동영상 변환 결과 섹션 -->
-                <section class="result-section hidden" id="videoResultSection">
-                    <div class="card">
-                        <div class="card__header">
-                            <h3>변환 결과</h3>
-                        </div>
-                        <div class="card__body">
-                            <div class="processing-status" id="videoProcessingStatus">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="videoProgressFill"></div>
-                                </div>
-                                <p class="progress-text" id="videoProgressText">변환 중...</p>
-                            </div>
-                            
-                            <div class="result-preview hidden" id="videoResultPreview">
-                                <div class="result-gif">
-                                    <h4>변환된 GIF</h4>
-                                    <div class="result-container">
-                                        <canvas id="videoResultCanvas" class="video-result-canvas"></canvas>
-                                    </div>
-                                    <div class="result-actions">
-                                        <button type="button" class="btn btn--primary" id="videoDownloadBtn">
-                                            다운로드
-                                        </button>
-                                        <button type="button" class="btn btn--secondary" id="videoNewFileBtn">
-                                            새 파일 업로드
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Video Processing Indicator -->
+                    <div id="video-processing" class="processing-indicator hidden">
+                        <div class="loading-spinner"></div>
+                        <p>변환 중...</p>
                     </div>
-                </section>
+
+                    <!-- Video Error Messages -->
+                    <div id="video-error" class="error-message hidden"></div>
+                </div>
             </div>
-        </main>
+        </div>
     </div>
 
     <script src="app.js"></script>
